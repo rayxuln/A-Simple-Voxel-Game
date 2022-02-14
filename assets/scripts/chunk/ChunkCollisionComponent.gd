@@ -35,4 +35,5 @@ func update_collision_shapes() -> void:
 
 #----- Signals -----
 func _on_chunk_data_component_chunk_data_updated() -> void:
-	update_collision_shapes()
+	pass
+#	update_collision_shapes()
