@@ -1,0 +1,33 @@
+[gd_scene load_steps=6 format=3 uid="uid://f158ott017wu"]
+
+[ext_resource type="Script" path="res://assets/scripts/FirstPersonController.gd" id="1_r6djc"]
+[ext_resource type="Script" path="res://assets/scripts/chunk/ChunkUpdateFactorComponent.gd" id="2_v240o"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_qtfps"]
+
+[sub_resource type="Sky" id="Sky_biffv"]
+sky_material = SubResource( "ProceduralSkyMaterial_qtfps" )
+
+[sub_resource type="Environment" id="Environment_hshrd"]
+background_mode = 2
+sky = SubResource( "Sky_biffv" )
+ambient_light_source = 3
+tonemap_mode = 3
+ss_reflections_enabled = true
+ssao_enabled = true
+ssil_enabled = true
+
+[node name="Camera3D" type="Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0.5)
+environment = SubResource( "Environment_hshrd" )
+current = true
+fov = 80.0
+script = ExtResource( "1_r6djc" )
+move_speed = 8
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_energy = 0.02
+omni_range = 25.0
+
+[node name="ChunkUpdateFactorComponent" type="Node" parent="."]
+script = ExtResource( "2_v240o" )

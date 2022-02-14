@@ -1,0 +1,175 @@
+[gd_scene load_steps=12 format=3 uid="uid://bi5c20d4sv5ag"]
+
+[ext_resource type="Script" path="res://assets/scripts/Game.gd" id="1_elsq3"]
+[ext_resource type="PackedScene" uid="uid://f158ott017wu" path="res://assets/prefabs/RoamingCamera.tscn" id="2_apmfv"]
+[ext_resource type="Script" path="res://assets/scripts/world/ChunkManagerComponent.gd" id="4_1xnsa"]
+[ext_resource type="Script" path="res://assets/scripts/gui/performance_displayer/PerformanceDisplayer.gd" id="5_v7pul"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_57sel"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3j286"]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0, 0.6, 0.470588, 0.588235)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qacay"]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0, 0.372549, 0.6, 0.588235)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_epdas"]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0.6, 0.411765, 0, 0.588235)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cgutf"]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0.505882, 0.0745098, 0, 0.588235)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_as0dq"]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0.141176, 0.0117647, 0.505882, 0.588235)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7y4xy"]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0, 0.505882, 0.0117647, 0.588235)
+
+[node name="Game" type="Node"]
+process_mode = 3
+script = ExtResource( "1_elsq3" )
+
+[node name="World" type="Node3D" parent="."]
+process_mode = 1
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.41897, 6.22493, 2.79805)
+mesh = SubResource( "BoxMesh_57sel" )
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="World"]
+transform = Transform3D(0.910055, 0.200485, -0.362774, 0.414487, -0.440189, 0.796514, 0, -0.875237, -0.483695, 0, 0, 0)
+light_energy = 0.7
+shadow_enabled = true
+
+[node name="ChunkRoot" type="Node3D" parent="World"]
+
+[node name="Camera3D" parent="World" instance=ExtResource( "2_apmfv" )]
+
+[node name="ChunkManagerComponent" type="Node" parent="World"]
+script = ExtResource( "4_1xnsa" )
+chunk_root_np = NodePath("../ChunkRoot")
+
+[node name="ChunkUpdateTimer" type="Timer" parent="World/ChunkManagerComponent"]
+
+[node name="Control" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -6.10352e-05
+mouse_filter = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PerformanceDisplayer" type="Control" parent="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource( "5_v7pul" )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Control/PerformanceDisplayer"]
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/separation = 0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="FPSLabel" type="Label" parent="Control/PerformanceDisplayer/VBoxContainer"]
+offset_right = 199.0
+offset_bottom = 37.0
+size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource( "StyleBoxFlat_3j286" )
+text = "456456546456456456456"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ProcessLabel" type="Label" parent="Control/PerformanceDisplayer/VBoxContainer"]
+offset_top = 37.0
+offset_right = 199.0
+offset_bottom = 74.0
+size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource( "StyleBoxFlat_qacay" )
+text = "456456546456456456456"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PhysicsLabel" type="Label" parent="Control/PerformanceDisplayer/VBoxContainer"]
+offset_top = 74.0
+offset_right = 199.0
+offset_bottom = 111.0
+size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource( "StyleBoxFlat_epdas" )
+text = "456456546456456456456"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PosLabel" type="Label" parent="Control/PerformanceDisplayer/VBoxContainer"]
+offset_top = 111.0
+offset_right = 199.0
+offset_bottom = 148.0
+size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource( "StyleBoxFlat_cgutf" )
+text = "456456546456456456456"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MemLabel" type="Label" parent="Control/PerformanceDisplayer/VBoxContainer"]
+offset_top = 148.0
+offset_right = 199.0
+offset_bottom = 185.0
+size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource( "StyleBoxFlat_as0dq" )
+text = "456456546456456456456"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="DrawCallsLabel" type="Label" parent="Control/PerformanceDisplayer/VBoxContainer"]
+offset_top = 185.0
+offset_right = 199.0
+offset_bottom = 222.0
+size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource( "StyleBoxFlat_7y4xy" )
+text = "456456546456456456456"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[connection signal="timeout" from="World/ChunkManagerComponent/ChunkUpdateTimer" to="World/ChunkManagerComponent" method="_on_chunk_update_timer_timeout"]

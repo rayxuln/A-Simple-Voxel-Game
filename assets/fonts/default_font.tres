@@ -1,0 +1,6 @@
+[gd_resource type="Font" load_steps=2 format=3 uid="uid://coed5lv25vkll"]
+
+[ext_resource type="FontData" uid="uid://cydexn425dlt2" path="res://assets/fonts/NotoSansSC-Regular.otf" id="1_n3ooe"]
+
+[resource]
+data/0 = ExtResource( "1_n3ooe" )

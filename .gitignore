@@ -1,0 +1,9 @@
+# Godot 4+ specific ignores
+.godot/
+build
+.import
+*.translation
+export_presets.cfg
+.mono
+.DS_Store
+*.pdb

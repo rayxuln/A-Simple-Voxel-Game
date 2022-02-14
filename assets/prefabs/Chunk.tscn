@@ -1,0 +1,48 @@
+[gd_scene load_steps=8 format=3 uid="uid://ckll814htfcif"]
+
+[ext_resource type="Script" path="res://assets/scripts/chunk/ChunkDataComponent.gd" id="1_4a2xk"]
+[ext_resource type="Shader" path="res://assets/shaders/Chunk.gdshader" id="1_mvg4g"]
+[ext_resource type="Texture2D" uid="uid://b8k6tpa1txxyr" path="res://assets/sprites/block_tex.png" id="1_qyymh"]
+[ext_resource type="Script" path="res://assets/scripts/chunk/ChunkMeshComponent.gd" id="2_0kkv6"]
+[ext_resource type="Script" path="res://assets/scripts/chunk/ChunkCollisionComponent.gd" id="5_kj3nk"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_jtcx3"]
+render_priority = 0
+shader = ExtResource( "1_mvg4g" )
+shader_param/albedo = Color(1, 1, 1, 1)
+shader_param/point_size = 1.0
+shader_param/roughness = 1.0
+shader_param/metallic_texture_channel = Plane(1, 0, 0, 0)
+shader_param/specular = 0.5
+shader_param/metallic = 0.0
+shader_param/uv1_scale = Vector3(1, 1, 1)
+shader_param/uv1_offset = Vector3(0, 0, 0)
+shader_param/uv2_scale = Vector3(1, 1, 1)
+shader_param/uv2_offset = Vector3(0, 0, 0)
+shader_param/pixel_size = 0.02
+shader_param/texture_albedo = ExtResource( "1_qyymh" )
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_7ohkt"]
+resource_local_to_scene = true
+
+[node name="Chunk" type="Node3D" groups=["chunk"]]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+material_override = SubResource( "ShaderMaterial_jtcx3" )
+mesh = SubResource( "ArrayMesh_7ohkt" )
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="ChunkDataComponent" type="Node" parent="."]
+script = ExtResource( "1_4a2xk" )
+
+[node name="ChunkMeshComponent" type="Node" parent="."]
+script = ExtResource( "2_0kkv6" )
+mesh_ins_np = NodePath("../MeshInstance3D")
+
+[node name="ChunkCollisionComponent" type="Node" parent="."]
+script = ExtResource( "5_kj3nk" )
+body_np = NodePath("../StaticBody3D")
+
+[connection signal="chunk_data_updated" from="ChunkDataComponent" to="ChunkMeshComponent" method="_on_chunk_data_component_chunk_data_updated"]
+[connection signal="chunk_data_updated" from="ChunkDataComponent" to="ChunkCollisionComponent" method="_on_chunk_data_component_chunk_data_updated"]
