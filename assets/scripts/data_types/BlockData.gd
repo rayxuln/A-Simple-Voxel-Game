@@ -25,13 +25,14 @@ var data:Dictionary = {
 		'back': 1,
 	},
 }
+var faces:int = FaceFlag.All
 
 #----- Methods -----
-func get_mesh_data(vertices:PackedVector3Array, uvs:PackedVector2Array, faces:int) -> void:
-	gen_a_cube_vertices(vertices, pos.get_pos_in_chunk(), faces)
-	gen_cube_uv(uvs, faces)
+func get_mesh_data(vertices:PackedVector3Array, uvs:PackedVector2Array) -> void:
+	gen_a_cube_vertices(vertices, pos.get_pos_in_chunk())
+	gen_cube_uv(uvs)
 
-func gen_a_cube_vertices(vertices:PackedVector3Array, offset:Vector3, faces:int) -> void:
+func gen_a_cube_vertices(vertices:PackedVector3Array, offset:Vector3) -> void:
 	if faces == FaceFlag.None:
 		return
 	
@@ -98,7 +99,7 @@ func gen_a_cube_vertices(vertices:PackedVector3Array, offset:Vector3, faces:int)
 		vertices.append(original_vertices[i])
 	
 
-func gen_cube_uv(uvs:PackedVector2Array, faces:int) -> void:
+func gen_cube_uv(uvs:PackedVector2Array) -> void:
 	var tex_size:Vector2 = Vector2(64, 64)
 	var unit_size:Vector2 = Vector2(16, 16)
 	var unit_num:Vector2i = tex_size / unit_size

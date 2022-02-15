@@ -11,7 +11,9 @@ var chunk_root:Node3D:
 
 #----- Dependencies -----
 func on_get_components() -> Array[NodePath]:
-	return []
+	return [
+		^'ChunkGeneratorComponent',
+	]
 #----- Overrides -----
 func on_update(delta:float) -> void:
 	pass
@@ -44,28 +46,49 @@ func gen_chunk(chunk_pos:Vector2i) -> Node3D:
 	chunks[c.chunk_pos.get_encoded_chunk_pos()] = chunk
 	return chunk
 
-
+func get_block_data_by_pos_array(poses:Array, res:Array) -> void:
+	var chunk_pos_map := {}
+	for i in poses.size():
+		var p = poses[i]
+		var chunk_pos = ChunkPosition.pos_to_chunk_pos(p)
+		var encoded_chunk_pos = ChunkPosition.encode_chunk_pos(chunk_pos)
+		if chunks.has(encoded_chunk_pos):
+			if not chunk_pos_map.has(encoded_chunk_pos):
+				chunk_pos_map[encoded_chunk_pos] = [[], []]
+			chunk_pos_map[encoded_chunk_pos][0].append(i)
+			chunk_pos_map[encoded_chunk_pos][1].append(p)
+	for encoded_chunk_pos in chunk_pos_map.keys():
+		var _res := []
+		_res.resize(chunk_pos_map[encoded_chunk_pos][1].size())
+		chunks[encoded_chunk_pos].get_node('ChunkDataComponent').get_block_data_by_pos_array(
+			chunk_pos_map[encoded_chunk_pos][1],
+			_res
+		)
+		for i in _res.size():
+			res[chunk_pos_map[encoded_chunk_pos][0][i]] = _res[i]
 #----- Signals -----
 func _on_chunk_update_timer_timeout() -> void:
 	var update_factors := get_tree().get_nodes_in_group('chunk_update_factor')
+	var render_distance := 6
+	var update_distance := 15
 	# load new chunk
 	var new_chunks := []
 	for f in update_factors:
 		var f_chunk_pos := ChunkPosition.pos_to_chunk_pos(f.global_transform.origin)
-		for x in range(-4, 4):
-			for y in range(-4, 4):
+		for x in range(-render_distance, render_distance):
+			for y in range(-render_distance, render_distance):
 				var chunk_pos := f_chunk_pos + Vector2i(x, y)
 				if not chunks.has(ChunkPosition.encode_chunk_pos(chunk_pos)):
 					var chunk = gen_chunk(chunk_pos)
 					new_chunks.append(chunk)
 					var c = chunk.get_node('ChunkDataComponent')
-					for cx in 16:
-						for cy in 16:
-							var bx:float = chunk_pos.x * 16.0 + cx
-							var bz:float = chunk_pos.y * 16.0 + cy
+					for cx in ChunkPosition.CHUNK_SIZE.x:
+						for cy in ChunkPosition.CHUNK_SIZE.z:
+							var bx:float = chunk_pos.x * ChunkPosition.CHUNK_SIZE.x + cx
+							var bz:float = chunk_pos.y * ChunkPosition.CHUNK_SIZE.z + cy
 							var my:float = (the_noise.get_noise_2d(bx, bz) + 1)/2.0 * 20
-							for by in my:
-								c.set_block_data(Vector3(bx, by, bz), DirtBlock.new())
+#							for by in my:
+#								c.set_block_data(Vector3(bx, by, bz), DirtBlock.new())
 							c.set_block_data(Vector3(bx, my, bz), GrassBlock.new())
 		for chunk in new_chunks:
 			var c = chunk.get_node('ChunkDataComponent')
@@ -82,12 +105,12 @@ func _on_chunk_update_timer_timeout() -> void:
 		var should_unload := true
 		for f in update_factors:
 			var f_chunk_pos := ChunkPosition.pos_to_chunk_pos(f.global_transform.origin)
-			var d := (chunk_pos - f_chunk_pos).length_squared()
-			if d <= 16:
+			var d := (chunk_pos - f_chunk_pos).length()
+			if d <= render_distance:
 				should_visible = true
 				should_unload = false
 				break
-			elif d <= 25:
+			elif d <=update_distance:
 				should_unload = false
 				break
 		if not should_unload:

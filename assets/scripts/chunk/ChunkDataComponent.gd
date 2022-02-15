@@ -3,6 +3,7 @@ extends BaseComponent
 signal chunk_data_updated
 
 var block_data := {}
+var block_data_mutex := Mutex.new()
 var chunk_pos:ChunkPosition = ChunkPosition.new():
 	set(v):
 		chunk_pos = v
@@ -40,14 +41,70 @@ func gen_temp_block_data() -> void:
 func emit_signal_chunk_data_updated():
 	chunk_data_updated.emit()
 
-func set_block_data(pos:Vector3, data:BlockData) -> void:
-	data.pos = BlockPosition.create(pos, chunk_pos)
+func set_block_data(pos_in_chunk:Vector3, data:BlockData) -> void:
+	data.pos = BlockPosition.create(pos_in_chunk, chunk_pos)
+	calc_and_update_face_falgs_by_pos(data, data.pos.get_pos())
+	block_data_mutex.lock()
 	block_data[data.pos.get_encoded_pos()] = data
+	block_data_mutex.unlock()
+
+func calc_and_update_face_falgs_by_pos(data:BlockData, pos:Vector3) -> void:
+	data.faces = BlockData.FaceFlag.None
+	var chunk_manager:BaseComponent = GameSystem.get_world().get_node(^'ChunkManagerComponent')
+	
+	var possible_poses := [
+		pos + Vector3.UP,
+		pos + Vector3.DOWN,
+		pos + Vector3.LEFT,
+		pos + Vector3.RIGHT,
+		pos + Vector3.FORWARD,
+		pos + Vector3.BACK,
+	]
+	var faces_array := [
+		BlockData.FaceFlag.Top,
+		BlockData.FaceFlag.Bottom,
+		BlockData.FaceFlag.Left,
+		BlockData.FaceFlag.Right,
+		BlockData.FaceFlag.Forward,
+		BlockData.FaceFlag.Back,
+	]
+	var inverse_faces_array := [
+		BlockData.FaceFlag.Bottom,
+		BlockData.FaceFlag.Top,
+		BlockData.FaceFlag.Right,
+		BlockData.FaceFlag.Left,
+		BlockData.FaceFlag.Back,
+		BlockData.FaceFlag.Forward,
+	]
+	var block_datas := []
+	block_datas.resize(possible_poses.size())
+	chunk_manager.get_block_data_by_pos_array(possible_poses, block_datas)
+	
+	var i := 0
+	while i < possible_poses.size():
+		if data.solid and block_datas[i]:
+			block_datas[i].faces &= ~inverse_faces_array[i]
+		if not (block_datas[i] and block_datas[i].solid):
+			data.faces |= faces_array[i]
+		i += 1
 
 func get_block_data(pos:Vector3) -> BlockData:
+	var res:BlockData = null
 	var encoded_pos := BlockPosition.encode_pos(BlockPosition.pos_to_pos_in_chunk(pos, chunk_pos.get_chunk_pos()))
+	block_data_mutex.lock()
 	if block_data.has(encoded_pos):
-		return block_data[encoded_pos]
-	return null
+		res = block_data[encoded_pos]
+	else:
+		res = null
+	block_data_mutex.unlock()
+	return res
+
+func get_block_data_by_pos_array(poses:Array, res:Array) -> void:
+	block_data_mutex.lock()
+	for i in poses.size():
+		var encoded_pos := BlockPosition.encode_pos(poses[i])
+		if block_data.has(encoded_pos):
+			res[i] = block_data[encoded_pos]
+	block_data_mutex.unlock()
 #----- Signals -----
 

@@ -12,7 +12,8 @@ func on_update(delta:float) -> void:
 	pass
 
 func on_enabled() -> void:
-	pass
+	var world = GameSystem.get_world()
+	world.get_node('ChunkGeneratorComponent').connect('responded', self._on_chunk_generator_responded)
 
 func on_disabled() -> void:
 	pass
@@ -23,60 +24,26 @@ func get_mesh_ins() -> MeshInstance3D:
 func update_mesh() -> void:
 	var chunk_data_component = components.ChunkDataComponent
 	
-	var arrays := []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array()
-	arrays[Mesh.ARRAY_NORMAL] = PackedVector3Array()
-	arrays[Mesh.ARRAY_TEX_UV] = PackedVector2Array()
-	
-	for block_data in chunk_data_component.block_data.values():
-		var bp:BlockPosition = block_data.pos
-		var pos:Vector3 = bp.get_pos()
-		var face_flags := calc_face_falgs_by_pos(pos)
-		block_data.get_mesh_data(arrays[Mesh.ARRAY_VERTEX], arrays[Mesh.ARRAY_TEX_UV], face_flags)
-	
-	calc_normals(arrays[Mesh.ARRAY_VERTEX], arrays[Mesh.ARRAY_NORMAL])
-	
-	var mesh_instance := get_mesh_ins()
-	var mesh:ArrayMesh = mesh_instance.mesh
-	mesh.clear_surfaces()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	# in: block_data
+	# out: vertices, uvs, normals
+	var world = GameSystem.get_world()
+	world.get_node('ChunkGeneratorComponent').request_worker({
+		'encoded_chunk_pos': chunk_data_component.chunk_pos.get_encoded_chunk_pos(),
+		'worker_func': self._worker_gen_mesh_data,
+	})
 
-func calc_face_falgs_by_pos(pos:Vector3) -> int:
-	var res:int = BlockData.FaceFlag.None
-	var chunk_manager:BaseComponent = GameSystem.get_world().get_node(^'ChunkManagerComponent')
+func _worker_gen_mesh_data(data):
+	data.vertices = PackedVector3Array()
+	data.normals = PackedVector3Array()
+	data.uvs = PackedVector2Array()
 	
-	var temp := pos + Vector3.UP
-	var block:BlockData = chunk_manager.get_block_data(temp)
-	if not (block and block.solid):
-		res |= BlockData.FaceFlag.Top
-	
-	temp = pos + Vector3.DOWN
-	block = chunk_manager.get_block_data(temp)
-	if not (block and block.solid):
-		res |= BlockData.FaceFlag.Bottom
+	components.ChunkDataComponent.block_data_mutex.lock()
+	var values = components.ChunkDataComponent.block_data.values()
+	components.ChunkDataComponent.block_data_mutex.unlock()
+	for block_data in values:
+		block_data.get_mesh_data(data.vertices, data.uvs)
 
-	temp = pos + Vector3.LEFT
-	block = chunk_manager.get_block_data(temp)
-	if not (block and block.solid):
-		res |= BlockData.FaceFlag.Left
-
-	temp = pos + Vector3.RIGHT
-	block = chunk_manager.get_block_data(temp)
-	if not (block and block.solid):
-		res |= BlockData.FaceFlag.Right
-#
-	temp = pos + Vector3.FORWARD
-	block = chunk_manager.get_block_data(temp)
-	if not (block and block.solid):
-		res |= BlockData.FaceFlag.Forward
-	
-	temp = pos + Vector3.BACK
-	block = chunk_manager.get_block_data(temp)
-	if not (block and block.solid):
-		res |= BlockData.FaceFlag.Back
-	
-	return res
+	calc_normals(data.vertices, data.normals)
 
 func calc_normals(vertices:PackedVector3Array ,normals:PackedVector3Array) -> void:
 	normals.resize(vertices.size())
@@ -100,3 +67,17 @@ func set_mesh_visible(v:bool) -> void:
 #----- Signals -----
 func _on_chunk_data_component_chunk_data_updated() -> void:
 	update_mesh()
+
+func _on_chunk_generator_responded(data) -> void:
+	var encoded_chunk_pos = components.ChunkDataComponent.chunk_pos.get_encoded_chunk_pos()
+	if data.encoded_chunk_pos == encoded_chunk_pos:
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = data.vertices
+		arrays[Mesh.ARRAY_NORMAL] = data.normals
+		arrays[Mesh.ARRAY_TEX_UV] = data.uvs
+		
+		var mesh_instance := get_mesh_ins()
+		var mesh:ArrayMesh = mesh_instance.mesh
+		mesh.clear_surfaces()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)

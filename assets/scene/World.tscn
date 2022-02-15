@@ -1,0 +1,34 @@
+[gd_scene load_steps=5 format=3 uid="uid://dplh58c4vpvmj"]
+
+[ext_resource type="PackedScene" uid="uid://f158ott017wu" path="res://assets/prefabs/RoamingCamera.tscn" id="1_vray5"]
+[ext_resource type="Script" path="res://assets/scripts/world/ChunkManagerComponent.gd" id="2_xsldt"]
+[ext_resource type="Script" path="res://assets/scripts/world/ChunkGeneratorComponent.gd" id="3_twhqh"]
+
+[sub_resource type="OpenSimplexNoise" id="OpenSimplexNoise_jjnsq"]
+seed = 1313123
+
+[node name="World" type="Node3D"]
+process_mode = 1
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.910055, 0.200485, -0.362774, 0.414487, -0.440189, 0.796514, 0, -0.875237, -0.483695, 0, 0, 0)
+light_energy = 0.7
+shadow_enabled = true
+
+[node name="ChunkRoot" type="Node3D" parent="."]
+
+[node name="Camera3D" parent="." instance=ExtResource( "1_vray5" )]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25, 0.5)
+
+[node name="ChunkManagerComponent" type="Node" parent="."]
+script = ExtResource( "2_xsldt" )
+chunk_root_np = NodePath("../ChunkRoot")
+the_noise = SubResource( "OpenSimplexNoise_jjnsq" )
+
+[node name="ChunkUpdateTimer" type="Timer" parent="ChunkManagerComponent"]
+
+[node name="ChunkGeneratorComponent" type="Node" parent="."]
+script = ExtResource( "3_twhqh" )
+worker_count = 10
+
+[connection signal="timeout" from="ChunkManagerComponent/ChunkUpdateTimer" to="ChunkManagerComponent" method="_on_chunk_update_timer_timeout"]

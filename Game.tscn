@@ -1,12 +1,8 @@
-[gd_scene load_steps=12 format=3 uid="uid://bi5c20d4sv5ag"]
+[gd_scene load_steps=10 format=3 uid="uid://bi5c20d4sv5ag"]
 
 [ext_resource type="Script" path="res://assets/scripts/Game.gd" id="1_elsq3"]
-[ext_resource type="PackedScene" uid="uid://f158ott017wu" path="res://assets/prefabs/RoamingCamera.tscn" id="2_apmfv"]
-[ext_resource type="Script" path="res://assets/scripts/world/ChunkManagerComponent.gd" id="4_1xnsa"]
+[ext_resource type="PackedScene" uid="uid://dplh58c4vpvmj" path="res://assets/scene/World.tscn" id="2_pa2v0"]
 [ext_resource type="Script" path="res://assets/scripts/gui/performance_displayer/PerformanceDisplayer.gd" id="5_v7pul"]
-
-[sub_resource type="OpenSimplexNoise" id="OpenSimplexNoise_jjnsq"]
-seed = 1313123
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3j286"]
 content_margin_left = 5.0
@@ -54,25 +50,7 @@ bg_color = Color(0, 0.505882, 0.0117647, 0.588235)
 process_mode = 3
 script = ExtResource( "1_elsq3" )
 
-[node name="World" type="Node3D" parent="."]
-process_mode = 1
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="World"]
-transform = Transform3D(0.910055, 0.200485, -0.362774, 0.414487, -0.440189, 0.796514, 0, -0.875237, -0.483695, 0, 0, 0)
-light_energy = 0.7
-shadow_enabled = true
-
-[node name="ChunkRoot" type="Node3D" parent="World"]
-
-[node name="Camera3D" parent="World" instance=ExtResource( "2_apmfv" )]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25, 0.5)
-
-[node name="ChunkManagerComponent" type="Node" parent="World"]
-script = ExtResource( "4_1xnsa" )
-chunk_root_np = NodePath("../ChunkRoot")
-the_noise = SubResource( "OpenSimplexNoise_jjnsq" )
-
-[node name="ChunkUpdateTimer" type="Timer" parent="World/ChunkManagerComponent"]
+[node name="World" parent="." instance=ExtResource( "2_pa2v0" )]
 
 [node name="Control" type="Control" parent="."]
 anchor_right = 1.0
@@ -170,5 +148,3 @@ text = "456456546456456456456"
 __meta__ = {
 "_edit_use_anchors_": false
 }
-
-[connection signal="timeout" from="World/ChunkManagerComponent/ChunkUpdateTimer" to="World/ChunkManagerComponent" method="_on_chunk_update_timer_timeout"]
