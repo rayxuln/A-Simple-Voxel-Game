@@ -165,6 +165,13 @@ func get_block_data(pos:Vector3) -> BlockData:
 	block_data_mutex.unlock()
 	return res
 
+func has_block_data_exist(encoded_pos:int) -> bool:
+	var res := false
+	block_data_mutex.lock()
+	res = block_data.has(encoded_pos)
+	block_data_mutex.unlock()
+	return res
+
 func get_block_data_by_pos_array(poses:Array, res:Array) -> void:
 	block_data_mutex.lock()
 	for i in poses.size():
@@ -175,5 +182,20 @@ func get_block_data_by_pos_array(poses:Array, res:Array) -> void:
 		if block_data.has(encoded_pos):
 			res[i] = block_data[encoded_pos]
 	block_data_mutex.unlock()
+
+func get_block_data_arround_pos(poses:Array, ditance:float, ignore_encoded_poses_map:Dictionary) -> Array:
+	var res := []
+	block_data_mutex.lock()
+	for pos in poses:
+		for bd in block_data.values():
+			if ignore_encoded_poses_map.has(bd.pos.get_encoded_pos()):
+				continue
+			var bd_pos:Vector3 = bd.pos.get_pos()
+			var d:Vector3 = (bd_pos-pos)
+			var l := d.length()
+			if l <= ditance:
+				res.append(bd)
+	block_data_mutex.unlock()
+	return res
 #----- Signals -----
 

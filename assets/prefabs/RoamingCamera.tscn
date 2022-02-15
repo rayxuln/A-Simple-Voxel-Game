@@ -1,7 +1,12 @@
-[gd_scene load_steps=6 format=3 uid="uid://f158ott017wu"]
+[gd_scene load_steps=9 format=3 uid="uid://f158ott017wu"]
 
-[ext_resource type="Script" path="res://assets/scripts/FirstPersonController.gd" id="1_r6djc"]
+[ext_resource type="Script" path="res://assets/scripts/roaming_camera/RoamingControllerComponent.gd" id="2_rim45"]
 [ext_resource type="Script" path="res://assets/scripts/chunk/ChunkUpdateFactorComponent.gd" id="2_v240o"]
+[ext_resource type="Script" path="res://assets/scripts/roaming_camera/FirstPersonCameraComponent.gd" id="3_cjfqu"]
+[ext_resource type="Script" path="res://assets/scripts/world/PickUpRayCastComponent.gd" id="4_ytrfj"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_knsjw"]
+size = Vector3(0.8, 1.7, 0.8)
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_qtfps"]
 
@@ -16,18 +21,58 @@ tonemap_mode = 3
 ss_reflections_enabled = true
 ssao_enabled = true
 ssil_enabled = true
+fog_light_color = Color(0, 0, 0, 1)
+fog_light_energy = 0.22
+fog_sun_scatter = 0.08
+fog_density = 0.0423
+fog_aerial_perspective = 0.652
+fog_height_density = 99.7809
+volumetric_fog_density = 0.028
 
-[node name="Camera3D" type="Camera3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0.5)
-environment = SubResource( "Environment_hshrd" )
-current = true
-fov = 80.0
-script = ExtResource( "1_r6djc" )
-move_speed = 8
+[node name="RoamingCamera" type="CharacterBody3D"]
+collision_layer = 0
+motion_mode = 1
+collision/safe_margin = 0.1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.846163, 0)
+shape = SubResource( "BoxShape3D_knsjw" )
 
 [node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0.5)
 light_energy = 0.02
 omni_range = 25.0
 
+[node name="EyePos" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.337, 0)
+
+[node name="Camera3D" type="Camera3D" parent="EyePos"]
+environment = SubResource( "Environment_hshrd" )
+current = true
+fov = 80.0
+
+[node name="PickUpRayCast" type="RayCast3D" parent="EyePos"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0021832, 0)
+target_position = Vector3(0, 0, -6)
+hit_from_inside = true
+
 [node name="ChunkUpdateFactorComponent" type="Node" parent="."]
 script = ExtResource( "2_v240o" )
+
+[node name="RoamingControllerComponent" type="Node" parent="."]
+script = ExtResource( "2_rim45" )
+camera_np = NodePath("../EyePos/Camera3D")
+
+[node name="FirstPersonCameraComponent" type="Node" parent="."]
+script = ExtResource( "3_cjfqu" )
+camera_np = NodePath("../EyePos")
+
+[node name="PickUpRayCastComponent" type="Node" parent="."]
+script = ExtResource( "4_ytrfj" )
+ray_cast_np = NodePath("../EyePos/PickUpRayCast")
+
+[node name="UpdateTimer" type="Timer" parent="PickUpRayCastComponent"]
+wait_time = 0.1
+autostart = true
+
+[connection signal="timeout" from="PickUpRayCastComponent/UpdateTimer" to="PickUpRayCastComponent" method="_on_update_timer_timeout"]

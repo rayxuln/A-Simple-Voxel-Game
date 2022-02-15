@@ -157,4 +157,5 @@ func get_collision_shapes(cs:Array):
 	points.append(offset + Vector3(0, 0, 1))
 	shape.points = points
 	res.shape = shape
+	res.set_meta('encoded_pos', pos.get_encoded_pos())
 	cs.append(res)

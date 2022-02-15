@@ -2,6 +2,9 @@ extends BaseComponent
 
 @export var render_distance := 6
 @export var update_distance := 15
+@export var collision_load_distance := 3
+@export var collision_unload_distance := 5
+@export var noisy_map := true
 
 var chunks := {}
 
@@ -41,7 +44,6 @@ func set_block_data(pos:Vector3, bd:BlockData) -> void:
 	
 	# update adjust blocks of other chunks' faces
 	var pos_offset_array := [Vector3.LEFT, Vector3.RIGHT, Vector3.FORWARD, Vector3.BACK]
-	var index_string_array := ['left', 'right', 'forward', 'back']
 	var inverse_index_string_array := ['right', 'left', 'back', 'forward']
 	var face_flag_array := [BlockData.FaceFlag.Left, BlockData.FaceFlag.Right, BlockData.FaceFlag.Forward, BlockData.FaceFlag.Back]
 	var inverse_face_flag_array := [BlockData.FaceFlag.Right, BlockData.FaceFlag.Left, BlockData.FaceFlag.Back, BlockData.FaceFlag.Forward]
@@ -168,15 +170,17 @@ func _on_chunk_update_timer_timeout() -> void:
 						'worker_func': func (data):
 							var c:ChunkDataComponent = data.chunk.get_node('ChunkDataComponent')
 							c.chunk_data_status = ChunkDataComponent.ChunkDataStatusType.Generating
-#							c.gen_temp_block_data()
-							for cx in ChunkPosition.CHUNK_SIZE.x:
-								for cy in ChunkPosition.CHUNK_SIZE.z:
-									var bx:float = chunk_pos.x * ChunkPosition.CHUNK_SIZE.x + cx
-									var bz:float = chunk_pos.y * ChunkPosition.CHUNK_SIZE.z + cy
-									var my:float = (the_noise.get_noise_2d(bx, bz) + 1)/2.0 * 20
-									for by in my:
-										c.set_block_data(Vector3(bx, by, bz), DirtBlock.new())
-									c.set_block_data(Vector3(bx, my, bz), GrassBlock.new())
+							if noisy_map:
+								for cx in ChunkPosition.CHUNK_SIZE.x:
+									for cy in ChunkPosition.CHUNK_SIZE.z:
+										var bx:float = chunk_pos.x * ChunkPosition.CHUNK_SIZE.x + cx
+										var bz:float = chunk_pos.y * ChunkPosition.CHUNK_SIZE.z + cy
+										var my:float = (the_noise.get_noise_2d(bx, bz) + 1)/2.0 * 20
+										for by in my:
+											c.set_block_data(Vector3(bx, by, bz), DirtBlock.new())
+										c.set_block_data(Vector3(bx, my, bz), GrassBlock.new())
+							else:
+								c.gen_temp_block_data()
 							c.chunk_data_status = ChunkDataComponent.ChunkDataStatusType.Valid
 							,
 						'chunk': chunk,
