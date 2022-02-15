@@ -1,9 +1,29 @@
 extends BaseComponent
+class_name ChunkDataComponent
 
 signal chunk_data_updated
 
 var block_data := {}
 var block_data_mutex := Mutex.new()
+
+enum ChunkDataStatusType {
+	Invalid,
+	Loading,
+	Generating,
+	Valid,
+}
+var chunk_data_status:int = ChunkDataStatusType.Invalid:
+	set(v):
+		chunk_data_status_mutex.lock()
+		chunk_data_status = v
+		chunk_data_status_mutex.unlock()
+	get:
+		chunk_data_status_mutex.lock()
+		var v = chunk_data_status
+		chunk_data_status_mutex.unlock()
+		return v
+var chunk_data_status_mutex := Mutex.new()
+
 var chunk_pos:ChunkPosition = ChunkPosition.new():
 	set(v):
 		chunk_pos = v
@@ -50,7 +70,7 @@ func set_block_data(pos_in_chunk:Vector3, data:BlockData) -> void:
 
 func calc_and_update_face_falgs_by_pos(data:BlockData, pos:Vector3) -> void:
 	data.faces = BlockData.FaceFlag.None
-	var chunk_manager:BaseComponent = GameSystem.get_world().get_node(^'ChunkManagerComponent')
+#	var chunk_manager:BaseComponent = GameSystem.get_world().get_node(^'ChunkManagerComponent')
 	
 	var possible_poses := [
 		pos + Vector3.UP,
@@ -78,7 +98,8 @@ func calc_and_update_face_falgs_by_pos(data:BlockData, pos:Vector3) -> void:
 	]
 	var block_datas := []
 	block_datas.resize(possible_poses.size())
-	chunk_manager.get_block_data_by_pos_array(possible_poses, block_datas)
+	get_block_data_by_pos_array(possible_poses, block_datas)
+#	chunk_manager.get_block_data_by_pos_array(possible_poses, block_datas)
 	
 	var i := 0
 	while i < possible_poses.size():
@@ -102,7 +123,10 @@ func get_block_data(pos:Vector3) -> BlockData:
 func get_block_data_by_pos_array(poses:Array, res:Array) -> void:
 	block_data_mutex.lock()
 	for i in poses.size():
-		var encoded_pos := BlockPosition.encode_pos(poses[i])
+		var pos_in_chunk := BlockPosition.pos_to_pos_in_chunk(poses[i], chunk_pos.get_chunk_pos())
+		if not BlockPosition.is_pos_in_chunk_valid(pos_in_chunk):
+			continue
+		var encoded_pos := BlockPosition.encode_pos(pos_in_chunk)
 		if block_data.has(encoded_pos):
 			res[i] = block_data[encoded_pos]
 	block_data_mutex.unlock()

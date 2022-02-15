@@ -13,7 +13,7 @@ func on_update(delta:float) -> void:
 
 func on_enabled() -> void:
 	var world = GameSystem.get_world()
-	world.get_node('ChunkGeneratorComponent').connect('responded', self._on_chunk_generator_responded)
+	world.get_node('ChunkMeshGeneratorComponent').connect('responded', self._on_chunk_generator_responded)
 
 func on_disabled() -> void:
 	pass
@@ -27,7 +27,7 @@ func update_mesh() -> void:
 	# in: block_data
 	# out: vertices, uvs, normals
 	var world = GameSystem.get_world()
-	world.get_node('ChunkGeneratorComponent').request_worker({
+	world.get_node('ChunkMeshGeneratorComponent').request_worker({
 		'encoded_chunk_pos': chunk_data_component.chunk_pos.get_encoded_chunk_pos(),
 		'worker_func': self._worker_gen_mesh_data,
 	})

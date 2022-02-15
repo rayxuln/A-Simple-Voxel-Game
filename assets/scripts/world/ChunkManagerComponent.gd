@@ -1,5 +1,8 @@
 extends BaseComponent
 
+@export var render_distance := 6
+@export var update_distance := 15
+
 var chunks := {}
 
 @export var chunk_root_np:NodePath
@@ -12,7 +15,8 @@ var chunk_root:Node3D:
 #----- Dependencies -----
 func on_get_components() -> Array[NodePath]:
 	return [
-		^'ChunkGeneratorComponent',
+		^'ChunkMeshGeneratorComponent',
+		^'ChunkDataGeneratorComponent',
 	]
 #----- Overrides -----
 func on_update(delta:float) -> void:
@@ -69,8 +73,6 @@ func get_block_data_by_pos_array(poses:Array, res:Array) -> void:
 #----- Signals -----
 func _on_chunk_update_timer_timeout() -> void:
 	var update_factors := get_tree().get_nodes_in_group('chunk_update_factor')
-	var render_distance := 6
-	var update_distance := 15
 	# load new chunk
 	var new_chunks := []
 	for f in update_factors:
@@ -81,18 +83,26 @@ func _on_chunk_update_timer_timeout() -> void:
 				if not chunks.has(ChunkPosition.encode_chunk_pos(chunk_pos)):
 					var chunk = gen_chunk(chunk_pos)
 					new_chunks.append(chunk)
-					var c = chunk.get_node('ChunkDataComponent')
-					for cx in ChunkPosition.CHUNK_SIZE.x:
-						for cy in ChunkPosition.CHUNK_SIZE.z:
-							var bx:float = chunk_pos.x * ChunkPosition.CHUNK_SIZE.x + cx
-							var bz:float = chunk_pos.y * ChunkPosition.CHUNK_SIZE.z + cy
-							var my:float = (the_noise.get_noise_2d(bx, bz) + 1)/2.0 * 20
-#							for by in my:
-#								c.set_block_data(Vector3(bx, by, bz), DirtBlock.new())
-							c.set_block_data(Vector3(bx, my, bz), GrassBlock.new())
-		for chunk in new_chunks:
-			var c = chunk.get_node('ChunkDataComponent')
-			c.call_deferred('emit_signal_chunk_data_updated')
+#					
+					# in chunk
+					# out block_data
+					components.ChunkDataGeneratorComponent.request_worker({
+						'worker_func': func (data):
+							var c:ChunkDataComponent = data.chunk.get_node('ChunkDataComponent')
+							c.chunk_data_status = ChunkDataComponent.ChunkDataStatusType.Generating
+							c.gen_temp_block_data()
+#							for cx in ChunkPosition.CHUNK_SIZE.x:
+#								for cy in ChunkPosition.CHUNK_SIZE.z:
+#									var bx:float = chunk_pos.x * ChunkPosition.CHUNK_SIZE.x + cx
+#									var bz:float = chunk_pos.y * ChunkPosition.CHUNK_SIZE.z + cy
+#									var my:float = (the_noise.get_noise_2d(bx, bz) + 1)/2.0 * 20
+#									for by in my:
+#										c.set_block_data(Vector3(bx, by, bz), DirtBlock.new())
+#									c.set_block_data(Vector3(bx, my, bz), GrassBlock.new())
+							c.chunk_data_status = ChunkDataComponent.ChunkDataStatusType.Valid
+							,
+						'chunk': chunk,
+					})
 	
 	# update visible
 	# unload chunks that too far
@@ -123,3 +133,11 @@ func _on_chunk_update_timer_timeout() -> void:
 	
 	
 	
+
+func _on_chunk_data_generator_component_responded(data) -> void:
+	var c = data.chunk.get_node('ChunkDataComponent')
+	
+	# update faces of the blocks that in the edges of the chunk
+	
+	
+	c.call_deferred('emit_signal_chunk_data_updated')

@@ -24,6 +24,11 @@ _global_script_classes=[{
 "language": &"GDScript",
 "path": "res://assets/scripts/data_types/BlockPosition.gd"
 }, {
+"base": "BaseComponent",
+"class": &"ChunkDataComponent",
+"language": &"GDScript",
+"path": "res://assets/scripts/chunk/ChunkDataComponent.gd"
+}, {
 "base": "RefCounted",
 "class": &"ChunkPosition",
 "language": &"GDScript",
@@ -48,16 +53,23 @@ _global_script_classes=[{
 "class": &"StoneBlock",
 "language": &"GDScript",
 "path": "res://assets/scripts/data_types/blocks/StoneBlock.gd"
+}, {
+"base": "BaseComponent",
+"class": &"WorkerComponent",
+"language": &"GDScript",
+"path": "res://assets/scripts/world/ChunkMeshGeneratorComponent.gd"
 }]
 _global_script_class_icons={
 "BaseComponent": "",
 "BlockData": "",
 "BlockPosition": "",
+"ChunkDataComponent": "",
 "ChunkPosition": "",
 "ChunkWorker": "",
 "DirtBlock": "",
 "GrassBlock": "",
-"StoneBlock": ""
+"StoneBlock": "",
+"WorkerComponent": ""
 }
 
 [application]

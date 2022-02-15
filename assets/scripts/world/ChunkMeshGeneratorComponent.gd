@@ -1,4 +1,5 @@
 extends BaseComponent
+class_name WorkerComponent
 
 signal responded(data)
 

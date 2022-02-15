@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://dplh58c4vpvmj"]
+[gd_scene load_steps=6 format=3 uid="uid://dplh58c4vpvmj"]
 
 [ext_resource type="PackedScene" uid="uid://f158ott017wu" path="res://assets/prefabs/RoamingCamera.tscn" id="1_vray5"]
 [ext_resource type="Script" path="res://assets/scripts/world/ChunkManagerComponent.gd" id="2_xsldt"]
-[ext_resource type="Script" path="res://assets/scripts/world/ChunkGeneratorComponent.gd" id="3_twhqh"]
+[ext_resource type="Script" path="res://assets/scripts/world/ChunkMeshGeneratorComponent.gd" id="3_4qovd"]
+[ext_resource type="Script" path="res://assets/scripts/world/ChunkDataGeneratorComponent.gd" id="4_kxov2"]
 
 [sub_resource type="OpenSimplexNoise" id="OpenSimplexNoise_jjnsq"]
 seed = 1313123
@@ -27,8 +28,13 @@ the_noise = SubResource( "OpenSimplexNoise_jjnsq" )
 
 [node name="ChunkUpdateTimer" type="Timer" parent="ChunkManagerComponent"]
 
-[node name="ChunkGeneratorComponent" type="Node" parent="."]
-script = ExtResource( "3_twhqh" )
+[node name="ChunkMeshGeneratorComponent" type="Node" parent="."]
+script = ExtResource( "3_4qovd" )
+worker_count = 10
+
+[node name="ChunkDataGeneratorComponent" type="Node" parent="."]
+script = ExtResource( "4_kxov2" )
 worker_count = 10
 
 [connection signal="timeout" from="ChunkManagerComponent/ChunkUpdateTimer" to="ChunkManagerComponent" method="_on_chunk_update_timer_timeout"]
+[connection signal="responded" from="ChunkDataGeneratorComponent" to="ChunkManagerComponent" method="_on_chunk_data_generator_component_responded"]

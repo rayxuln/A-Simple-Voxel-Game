@@ -17,6 +17,9 @@ static func pos_to_pos_in_chunk(pos:Vector3, _chunk_pos:Vector2i) -> Vector3:
 static func pos_in_chunk_to_pos(pos_in_chunk:Vector3, _chunk_pos:Vector2i) -> Vector3:
 	return pos_in_chunk + Vector3(_chunk_pos.x*ChunkPosition.CHUNK_SIZE.x, 0, _chunk_pos.y*ChunkPosition.CHUNK_SIZE.z)
 
+static func is_pos_in_chunk_valid(pos_in_chunk:Vector3) -> bool:
+	return pos_in_chunk.x >= 0 and pos_in_chunk.x < ChunkPosition.CHUNK_SIZE.x and pos_in_chunk.y >= 0 and pos_in_chunk.y < ChunkPosition.CHUNK_SIZE.y and pos_in_chunk.z >= 0 and pos_in_chunk.z < ChunkPosition.CHUNK_SIZE.z
+
 static func encode_pos(pos:Vector3) -> int:
 	@warning_ignore(narrowing_conversion)
 	var x:int = floor(pos.x)
