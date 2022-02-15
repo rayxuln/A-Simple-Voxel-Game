@@ -50,6 +50,14 @@ func get_pos() -> Vector3:
 func get_encoded_chunk_pos() -> int:
 	return encoded_chunk_pos
 
+func to_pos(pos_in_chunk:Vector3) -> Vector3:
+	var _chunk_pos := get_chunk_pos()
+	return pos_in_chunk + Vector3(_chunk_pos.x*ChunkPosition.CHUNK_SIZE.x, 0, _chunk_pos.y*ChunkPosition.CHUNK_SIZE.z)
+
+func to_pos_in_chunk(pos:Vector3) -> Vector3:
+	var _chunk_pos := get_chunk_pos()
+	return pos - Vector3(_chunk_pos.x*CHUNK_SIZE.x, 0, _chunk_pos.y*CHUNK_SIZE.z)
+
 func clone() -> ChunkPosition:
 	var c = ChunkPosition.new()
 	c.encoded_chunk_pos = encoded_chunk_pos

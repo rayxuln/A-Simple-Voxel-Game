@@ -31,6 +31,16 @@ func _process(delta: float) -> void:
 	
 	global_transform.origin += move_vec
 	
+	if Input.is_action_just_pressed('destroy'):
+		var world = GameSystem.get_world()
+		var chunk_manager = world.get_node('ChunkManagerComponent')
+		chunk_manager.set_block_data(global_transform.origin+Vector3.DOWN, null)
+	
+	if Input.is_action_just_pressed('build'):
+		var world = GameSystem.get_world()
+		var chunk_manager = world.get_node('ChunkManagerComponent')
+		chunk_manager.set_block_data(global_transform.origin+Vector3.DOWN, StoneBlock.new())
+	
 	GameSystem.get_gui('PerformanceDisplayer').set_pos_label('Pos: %s, Chunk: %s' % [Vector3i(global_transform.origin), ChunkPosition.pos_to_chunk_pos(global_transform.origin)])
 
 #----- Signals -----

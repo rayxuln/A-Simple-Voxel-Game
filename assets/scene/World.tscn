@@ -23,6 +23,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25, 0.5)
 
 [node name="ChunkManagerComponent" type="Node" parent="."]
 script = ExtResource( "2_xsldt" )
+render_distance = 2
 chunk_root_np = NodePath("../ChunkRoot")
 the_noise = SubResource( "OpenSimplexNoise_jjnsq" )
 

@@ -40,9 +40,15 @@ script = ExtResource( "1_4a2xk" )
 script = ExtResource( "2_0kkv6" )
 mesh_ins_np = NodePath("../MeshInstance3D")
 
+[node name="DirtyTimer" type="Timer" parent="ChunkMeshComponent"]
+process_callback = 0
+wait_time = 0.1
+autostart = true
+
 [node name="ChunkCollisionComponent" type="Node" parent="."]
 script = ExtResource( "5_kj3nk" )
 body_np = NodePath("../StaticBody3D")
 
 [connection signal="chunk_data_updated" from="ChunkDataComponent" to="ChunkMeshComponent" method="_on_chunk_data_component_chunk_data_updated"]
 [connection signal="chunk_data_updated" from="ChunkDataComponent" to="ChunkCollisionComponent" method="_on_chunk_data_component_chunk_data_updated"]
+[connection signal="timeout" from="ChunkMeshComponent/DirtyTimer" to="ChunkMeshComponent" method="_on_dirty_timer_timeout"]

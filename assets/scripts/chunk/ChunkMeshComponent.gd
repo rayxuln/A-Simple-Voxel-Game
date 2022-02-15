@@ -2,6 +2,9 @@ extends BaseComponent
 
 @export var mesh_ins_np:NodePath
 
+var timestamp := 0
+var dirty := false
+
 #----- Dependencies -----
 func on_get_components() -> Array[NodePath]:
 	return [
@@ -24,15 +27,20 @@ func get_mesh_ins() -> MeshInstance3D:
 func update_mesh() -> void:
 	var chunk_data_component = components.ChunkDataComponent
 	
+	timestamp += 1
+	
 	# in: block_data
 	# out: vertices, uvs, normals
 	var world = GameSystem.get_world()
 	world.get_node('ChunkMeshGeneratorComponent').request_worker({
 		'encoded_chunk_pos': chunk_data_component.chunk_pos.get_encoded_chunk_pos(),
 		'worker_func': self._worker_gen_mesh_data,
+		'timestamp': timestamp,
 	})
 
 func _worker_gen_mesh_data(data):
+	if data.timestamp != timestamp:
+		return
 	data.vertices = PackedVector3Array()
 	data.normals = PackedVector3Array()
 	data.uvs = PackedVector2Array()
@@ -69,6 +77,8 @@ func _on_chunk_data_component_chunk_data_updated() -> void:
 	update_mesh()
 
 func _on_chunk_generator_responded(data) -> void:
+	if data.timestamp != timestamp:
+		return
 	var encoded_chunk_pos = components.ChunkDataComponent.chunk_pos.get_encoded_chunk_pos()
 	if data.encoded_chunk_pos == encoded_chunk_pos:
 		var arrays := []
@@ -81,3 +91,9 @@ func _on_chunk_generator_responded(data) -> void:
 		var mesh:ArrayMesh = mesh_instance.mesh
 		mesh.clear_surfaces()
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+
+
+func _on_dirty_timer_timeout() -> void:
+	if dirty:
+		update_mesh()
+		dirty = false

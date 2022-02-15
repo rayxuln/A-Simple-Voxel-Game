@@ -29,6 +29,48 @@ func on_enabled() -> void:
 func on_disabled() -> void:
 	$ChunkUpdateTimer.stop()
 #----- Mehtods -----
+func set_block_data(pos:Vector3, bd:BlockData) -> void:
+	var chunk = get_chunk_by_pos(pos)
+	assert(chunk != null)
+	var c:ChunkDataComponent = chunk.get_node('ChunkDataComponent')
+	if c.chunk_data_status != ChunkDataComponent.ChunkDataStatusType.Valid:
+		return
+	var cm = chunk.get_node('ChunkMeshComponent')
+	c.set_block_data(pos, bd)
+	cm.dirty = true
+	
+	# update adjust blocks of other chunks' faces
+	var pos_offset_array := [Vector3.LEFT, Vector3.RIGHT, Vector3.FORWARD, Vector3.BACK]
+	var index_string_array := ['left', 'right', 'forward', 'back']
+	var inverse_index_string_array := ['right', 'left', 'back', 'forward']
+	var face_flag_array := [BlockData.FaceFlag.Left, BlockData.FaceFlag.Right, BlockData.FaceFlag.Forward, BlockData.FaceFlag.Back]
+	var inverse_face_flag_array := [BlockData.FaceFlag.Right, BlockData.FaceFlag.Left, BlockData.FaceFlag.Back, BlockData.FaceFlag.Forward]
+	
+	for i in pos_offset_array.size():
+		var other_pos = pos + pos_offset_array[i]
+		var other_chunk = get_chunk_by_pos(other_pos)
+		if other_chunk != chunk:
+			var other_chunk_updated:bool = false
+			var other_c:ChunkDataComponent = other_chunk.get_node('ChunkDataComponent')
+			var other_encoded_pos:int = BlockPosition.encode_pos(other_c.chunk_pos.to_pos_in_chunk(other_pos))
+			var other_side_block_data:Dictionary = other_c.block_data_index_map[inverse_index_string_array[i]]
+			var other_bd:BlockData = null
+			if other_side_block_data.has(other_encoded_pos):
+				other_bd = other_side_block_data[other_encoded_pos]
+			if other_bd:
+				if bd and bd.solid:
+					other_bd.faces &= ~inverse_face_flag_array[i]
+				else:
+					other_bd.faces |= inverse_face_flag_array[i]
+				other_chunk_updated = true
+			if bd:
+				if other_bd and other_bd.solid:
+					bd.faces &= ~face_flag_array[i]
+				else:
+					bd.faces |= face_flag_array[i]
+			if other_chunk_updated:
+				other_chunk.get_node('ChunkMeshComponent').dirty = true
+
 func get_block_data(pos:Vector3) -> BlockData:
 	var chunk = get_chunk_by_pos(pos)
 	if chunk == null:
@@ -70,6 +112,42 @@ func get_block_data_by_pos_array(poses:Array, res:Array) -> void:
 		)
 		for i in _res.size():
 			res[chunk_pos_map[encoded_chunk_pos][0][i]] = _res[i]
+
+func update_faces_of_the_blocks_that_in_the_edges_of_the_chunk(chunk) -> void:
+	var c:ChunkDataComponent = chunk.get_node('ChunkDataComponent')
+	var chunk_pos_offset_array := [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]
+	var pos_offset_array := [Vector3.LEFT, Vector3.RIGHT, Vector3.FORWARD, Vector3.BACK]
+	var index_string_array := ['left', 'right', 'forward', 'back']
+	var inverse_index_string_array := ['right', 'left', 'back', 'forward']
+	var face_flag_array := [BlockData.FaceFlag.Left, BlockData.FaceFlag.Right, BlockData.FaceFlag.Forward, BlockData.FaceFlag.Back]
+	var inverse_face_flag_array := [BlockData.FaceFlag.Right, BlockData.FaceFlag.Left, BlockData.FaceFlag.Back, BlockData.FaceFlag.Forward]
+
+	for i in chunk_pos_offset_array.size():
+#		print('[%s] %s side block count: %s/%s' % [c.chunk_pos.get_chunk_pos(), index_string_array[i], c.block_data_index_map[index_string_array[i]].size(), c.block_data.size()])
+		if c.block_data_index_map[index_string_array[i]].size() == 0:
+			continue
+		var other_chunk_pos := c.chunk_pos.get_chunk_pos() + chunk_pos_offset_array[i]
+		var other_encoded_chunk_pos := ChunkPosition.encode_chunk_pos(other_chunk_pos)
+		if chunks.has(other_encoded_chunk_pos):
+			var other_chunk = chunks[other_encoded_chunk_pos]
+			var other_c:ChunkDataComponent = other_chunk.get_node('ChunkDataComponent')
+#			print('[%s]%s chunk[%s] data status: %s' % [c.chunk_pos.get_chunk_pos(), index_string_array[i], other_c.chunk_pos.get_chunk_pos(), other_c.chunk_data_status])
+			if other_c.chunk_data_status == ChunkDataComponent.ChunkDataStatusType.Valid:
+				var other_block_data:Dictionary = other_c.block_data_index_map[inverse_index_string_array[i]]
+				var block_data:Dictionary = c.block_data_index_map[index_string_array[i]]
+				var other_chunk_updated := false
+				for bd in block_data.values():
+					var pos:Vector3 = bd.pos.get_pos()
+					var other_pos := pos + pos_offset_array[i]
+					var other_encoded_pos := BlockPosition.encode_pos(BlockPosition.pos_to_pos_in_chunk(other_pos, other_chunk_pos))
+					if other_block_data.has(other_encoded_pos):
+						var other_bd:BlockData = other_block_data[other_encoded_pos]
+						bd.faces &= ~face_flag_array[i]
+						other_bd.faces &= ~inverse_face_flag_array[i]
+						other_chunk_updated = true
+				if other_chunk_updated:
+#					print('update others!')
+					other_c.call_deferred('emit_signal_chunk_data_updated')
 #----- Signals -----
 func _on_chunk_update_timer_timeout() -> void:
 	var update_factors := get_tree().get_nodes_in_group('chunk_update_factor')
@@ -90,15 +168,15 @@ func _on_chunk_update_timer_timeout() -> void:
 						'worker_func': func (data):
 							var c:ChunkDataComponent = data.chunk.get_node('ChunkDataComponent')
 							c.chunk_data_status = ChunkDataComponent.ChunkDataStatusType.Generating
-							c.gen_temp_block_data()
-#							for cx in ChunkPosition.CHUNK_SIZE.x:
-#								for cy in ChunkPosition.CHUNK_SIZE.z:
-#									var bx:float = chunk_pos.x * ChunkPosition.CHUNK_SIZE.x + cx
-#									var bz:float = chunk_pos.y * ChunkPosition.CHUNK_SIZE.z + cy
-#									var my:float = (the_noise.get_noise_2d(bx, bz) + 1)/2.0 * 20
-#									for by in my:
-#										c.set_block_data(Vector3(bx, by, bz), DirtBlock.new())
-#									c.set_block_data(Vector3(bx, my, bz), GrassBlock.new())
+#							c.gen_temp_block_data()
+							for cx in ChunkPosition.CHUNK_SIZE.x:
+								for cy in ChunkPosition.CHUNK_SIZE.z:
+									var bx:float = chunk_pos.x * ChunkPosition.CHUNK_SIZE.x + cx
+									var bz:float = chunk_pos.y * ChunkPosition.CHUNK_SIZE.z + cy
+									var my:float = (the_noise.get_noise_2d(bx, bz) + 1)/2.0 * 20
+									for by in my:
+										c.set_block_data(Vector3(bx, by, bz), DirtBlock.new())
+									c.set_block_data(Vector3(bx, my, bz), GrassBlock.new())
 							c.chunk_data_status = ChunkDataComponent.ChunkDataStatusType.Valid
 							,
 						'chunk': chunk,
@@ -135,9 +213,9 @@ func _on_chunk_update_timer_timeout() -> void:
 	
 
 func _on_chunk_data_generator_component_responded(data) -> void:
-	var c = data.chunk.get_node('ChunkDataComponent')
+	var c:ChunkDataComponent = data.chunk.get_node('ChunkDataComponent')
 	
 	# update faces of the blocks that in the edges of the chunk
-	
+	update_faces_of_the_blocks_that_in_the_edges_of_the_chunk(data.chunk)
 	
 	c.call_deferred('emit_signal_chunk_data_updated')
