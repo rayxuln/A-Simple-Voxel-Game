@@ -51,6 +51,11 @@ static func calc_chunk_pos(pos:Vector3) -> Vector2i:
 static func is_chunk_pos_same(chunk_pos_a:Vector2i, chunk_pos_b:Vector2i) -> bool:
 	return chunk_pos_a.x == chunk_pos_b.x and chunk_pos_a.y == chunk_pos_b.y
 
+static func is_pos_same(a:Vector3, b:Vector3) -> bool:
+	return floor(a.x) == floor(b.x) and \
+					floor(a.y) == floor(b.y) and \
+					floor(a.z) == floor(b.z)
+
 func get_encoded_pos() -> int:
 	return encoded_pos
 

@@ -1,12 +1,14 @@
-[gd_scene load_steps=9 format=3 uid="uid://f158ott017wu"]
+[gd_scene load_steps=10 format=3 uid="uid://f158ott017wu"]
 
 [ext_resource type="Script" path="res://assets/scripts/roaming_camera/RoamingControllerComponent.gd" id="2_rim45"]
 [ext_resource type="Script" path="res://assets/scripts/chunk/ChunkUpdateFactorComponent.gd" id="2_v240o"]
 [ext_resource type="Script" path="res://assets/scripts/roaming_camera/FirstPersonCameraComponent.gd" id="3_cjfqu"]
 [ext_resource type="Script" path="res://assets/scripts/world/PickUpRayCastComponent.gd" id="4_ytrfj"]
+[ext_resource type="Script" path="res://assets/scripts/roaming_camera/StatusReportComponent.gd" id="5_626so"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_knsjw"]
-size = Vector3(0.8, 1.7, 0.8)
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_nihkj"]
+radius = 0.4
+height = 1.8
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_qtfps"]
 
@@ -32,11 +34,10 @@ volumetric_fog_density = 0.028
 [node name="RoamingCamera" type="CharacterBody3D"]
 collision_layer = 0
 motion_mode = 1
-collision/safe_margin = 0.1
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.846163, 0)
-shape = SubResource( "BoxShape3D_knsjw" )
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.903393, 0)
+shape = SubResource( "CylinderShape3D_nihkj" )
 
 [node name="OmniLight3D" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0.5)
@@ -74,5 +75,8 @@ ray_cast_np = NodePath("../EyePos/PickUpRayCast")
 [node name="UpdateTimer" type="Timer" parent="PickUpRayCastComponent"]
 wait_time = 0.1
 autostart = true
+
+[node name="StatusReportComponent" type="Node" parent="."]
+script = ExtResource( "5_626so" )
 
 [connection signal="timeout" from="PickUpRayCastComponent/UpdateTimer" to="PickUpRayCastComponent" method="_on_update_timer_timeout"]

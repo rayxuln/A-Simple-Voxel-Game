@@ -6,7 +6,8 @@ var camera:Camera3D:
 		return get_node(camera_np)
 
 @export var jump_speed := 10
-@export var move_speed := 8
+@export var move_speed := 6
+@export var max_fallen_speed := 20
 @export var sprint_factor := 1.75
 @export var gravity_factor := 0.07
 @export var fov_factor := 0.5
@@ -53,45 +54,71 @@ func on_physics_update(delta:float) -> void:
 	camera.fov = lerp(camera.fov, target_fov, 0.3)
 	if Input.is_action_pressed('sprint'):
 		move_vec *= sprint_factor
-		target_fov = orignal_fov * sprint_factor * fov_factor
+		target_fov = orignal_fov * ((sprint_factor-1) * fov_factor+1)
 	else:
 		target_fov = orignal_fov
 	
 	if fly_mode:
 		o.motion_velocity = move_vec
 	else:
+		var mv := o.motion_velocity
 		if o.is_on_floor():
 			if Input.is_action_just_pressed('jump'):
-				o.motion_velocity.y = jump_speed
+				mv.y = jump_speed
 			else:
-				o.motion_velocity.y = 0
+				mv.y = -0.1
 		else:
-			o.motion_velocity.y += -gravity_factor * ProjectSettings.get('physics/3d/default_gravity')
-		o.motion_velocity.x = move_vec.x
-		o.motion_velocity.z = move_vec.z
+			mv.y += -gravity_factor * ProjectSettings.get('physics/3d/default_gravity')
+			if abs(mv.y) >= max_fallen_speed:
+				mv.y = -max_fallen_speed
+		mv.x = move_vec.x
+		mv.z = move_vec.z
+		
+		if Input.is_action_pressed('sneak'):
+			var c:KinematicCollision3D = o.move_and_collide(mv*3, true, 0.001, 6)
+			var should_stop := true
+			if c != null:
+				for i in c.get_collision_count():
+					if c.get_normal(i).y > 0:
+						should_stop = false
+						break
+			if should_stop:
+				mv.x = 0
+				mv.z = 0
+		o.motion_velocity = mv
 	
 
 	if Input.is_action_just_pressed('destroy'):
 		var world = GameSystem.get_world()
 		var chunk_manager = world.get_node('ChunkManagerComponent')
-		if components.PickUpRayCastComponent.current_look_at_block_data:
-			chunk_manager.set_block_data(
-				components.PickUpRayCastComponent
-									.current_look_at_block_data
-									.pos.get_pos()
-				, null)
+		var bd:BlockData = components.PickUpRayCastComponent.current_look_at_block_data
+		if bd:
+			chunk_manager.set_block_data(bd.pos.get_pos(), null)
 
 	if Input.is_action_just_pressed('build'):
 		var world = GameSystem.get_world()
 		var chunk_manager = world.get_node('ChunkManagerComponent')
-		chunk_manager.set_block_data(get_owner().global_transform.origin+Vector3.DOWN, StoneBlock.new())
+		var bd:BlockData = components.PickUpRayCastComponent.current_look_at_block_data
+		var face = components.PickUpRayCastComponent.current_look_at_block_face
+		if face:
+			var target_pos:Vector3 = bd.pos.get_pos() + BlockData.get_direction_vector_by_face_flag(face)
+			var origin_pos := o.transform.origin
+			var can_place:bool = \
+				not BlockPosition.is_pos_same(origin_pos, target_pos) and \
+				not BlockPosition.is_pos_same(origin_pos+Vector3.UP, target_pos)
+			if can_place:
+				chunk_manager.set_block_data(target_pos, StoneBlock.new())
 	
 	if Input.is_action_just_pressed('fly'):
 		fly_mode = not fly_mode
 	
-	GameSystem.get_gui('PerformanceDisplayer').set_pos_label('Pos: %s, Chunk: %s' % [Vector3i(get_owner().global_transform.origin), ChunkPosition.pos_to_chunk_pos(get_owner().global_transform.origin)])
 	o.move_and_slide()
+
+func on_update(delta:float):
+	if get_owner().global_transform.origin.y <= -16:
+		get_owner().global_transform.origin.y = 100
 
 func on_enable():
 	orignal_fov = camera.fov
+
 #----- Signals -----

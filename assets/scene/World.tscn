@@ -19,14 +19,13 @@ shadow_enabled = true
 
 [node name="ChunkRoot" type="Node3D" parent="."]
 
-[node name="Camera3D" parent="." instance=ExtResource( "1_vray5" )]
+[node name="RoamingCamera" parent="." instance=ExtResource( "1_vray5" )]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25, 0.5)
 
 [node name="ChunkManagerComponent" type="Node" parent="."]
 script = ExtResource( "2_xsldt" )
-collision_load_distance = 8
-collision_unload_distance = 10
-noisy_map = false
+collision_load_distance = 4
+collision_unload_distance = 6
 chunk_root_np = NodePath("../ChunkRoot")
 the_noise = SubResource( "OpenSimplexNoise_jjnsq" )
 

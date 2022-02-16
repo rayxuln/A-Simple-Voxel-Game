@@ -34,9 +34,9 @@ func update_collision_shapes() -> void:
 	var loaded_encoded_pos_map := {}
 	
 	for c in body.get_children():
-		if c is CollisionShape3D:
+		if c is BlockCollisionShape:
 			var should_unload := true
-			var encoded_pos:int = c.get_meta('encoded_pos')
+			var encoded_pos:int = c.block_pos.get_encoded_pos()
 			if components.ChunkDataComponent.has_block_data_exist(encoded_pos):
 				var pos:Vector3 = components.ChunkDataComponent.chunk_pos.to_pos(BlockPosition.decode_pos(encoded_pos))
 				for f_pos in poses:
@@ -63,7 +63,7 @@ func update_collision_shapes() -> void:
 		var cs := []
 		var block_data:Array = components.ChunkDataComponent.get_block_data_arround_pos(poses, load_distance, loaded_encoded_pos_map)
 		for bd in block_data:
-			bd.get_collision_shapes(cs)
+			bd.get_collision_shapes(body, cs)
 		
 		for c in cs:
 			body.add_child(c)

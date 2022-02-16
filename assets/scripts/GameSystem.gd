@@ -7,6 +7,8 @@ var capture_mouse := true:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	get:
+		return capture_mouse
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
